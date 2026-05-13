@@ -1,0 +1,14 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_GOOGLE_DRIVE_API_KEY: string
+  readonly VITE_GOOGLE_DRIVE_FOLDER_ID: string
+  readonly VITE_GOOGLE_CLIENT_ID: string
+  readonly VITE_ADMIN_PASSWORD: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
+
+declare var google: any;
