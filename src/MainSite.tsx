@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Menu,
   Phone,
-  Loader2
+  Loader2,
+  Maximize
 } from 'lucide-react';
 
 // --- Types ---
@@ -30,14 +31,14 @@ interface GalleryImage {
 
 // --- Data ---
 const FALLBACK_IMAGES = [
-  'https://picsum.photos/seed/wedding1/800/1200',
-  'https://picsum.photos/seed/wedding2/800/600',
-  'https://picsum.photos/seed/wedding3/800/800',
-  'https://picsum.photos/seed/wedding4/800/1000',
-  'https://picsum.photos/seed/wedding5/800/600',
-  'https://picsum.photos/seed/wedding6/800/800',
-  'https://picsum.photos/seed/wedding7/800/1200',
-  'https://picsum.photos/seed/wedding8/800/600',
+  '/images/1.jpeg',
+  '/images/2.jpeg',
+  '/images/3.jpeg',
+  '/images/4.jpeg',
+  '/images/5.jpeg',
+  '/images/6.jpeg',
+  '/images/7.jpeg',
+  '/images/8.jpeg',
 ];
 
 
@@ -107,11 +108,19 @@ const CustomCursor = () => {
   );
 };
 
-const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
+const LoadingScreen = ({ onComplete, isDataLoaded }: { onComplete: () => void, isDataLoaded: boolean }) => {
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2500);
+    const timer = setTimeout(() => setMinTimeElapsed(true), 2000);
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, []);
+
+  useEffect(() => {
+    if (minTimeElapsed && isDataLoaded) {
+      onComplete();
+    }
+  }, [minTimeElapsed, isDataLoaded, onComplete]);
 
   return (
     <motion.div
@@ -237,7 +246,7 @@ const Navbar = () => {
               <a
                 key={link.name}
                 href={link.href}
-                className={`text-sm uppercase tracking-widest font-medium transition-colors ${activeSection === link.id ? 'text-gold' : 'text-slate-600'}`}
+                className={`text-sm uppercase tracking-widest font-bold transition-colors w-full text-center py-4 border-b border-slate-50 last:border-0 ${activeSection === link.id ? 'text-gold' : 'text-slate-600'}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.name}
@@ -254,12 +263,14 @@ const Hero = () => {
   return (
     <section id="home" className="relative h-screen w-full overflow-hidden flex items-center justify-center">
       {/* Background Image */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 bg-slate-900">
         <img
-          src="https://picsum.photos/seed/hero-wedding/1920/1080"
+          src="/images/1.jpeg"
           alt="Wedding Hero"
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
+          loading="eager"
+          style={{ fetchPriority: 'high' } as any}
         />
         <div className="absolute inset-0 bg-black/30"></div>
       </div>
@@ -273,7 +284,7 @@ const Hero = () => {
           className="flex flex-col items-center"
         >
           <span className="text-white/80 uppercase tracking-[0.3em] text-[10px] md:text-sm mb-4 block">Photography</span>
-          <h1 className="text-4xl md:text-8xl text-white mb-2 font-serif leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-8xl text-white mb-2 font-serif leading-tight">
             ARROW ADS <br />
             <span className="text-gold italic">Wedding</span>
           </h1>
@@ -301,7 +312,6 @@ const Hero = () => {
 const About = () => {
   return (
     <section id="about" className="py-16 md:py-24 px-6 relative overflow-hidden">
-      <img src="/images/bg_about.png" className="section-bg-image" alt="" />
       <div className="section-overlay"></div>
       <div className="bg-blob bg-blob-1 opacity-10"></div>
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
@@ -313,10 +323,11 @@ const About = () => {
           className="relative order-2 md:order-1"
         >
           <img
-            src="https://picsum.photos/seed/about-wedding/800/1000"
+            src="/images/2.jpeg"
             alt="Photographer at work"
             className="w-full h-auto rounded-sm shadow-2xl"
             referrerPolicy="no-referrer"
+            loading="lazy"
           />
           <div className="absolute -bottom-10 -right-10 hidden lg:block w-64 h-64 bg-champagne -z-10"></div>
         </motion.div>
@@ -354,7 +365,6 @@ const About = () => {
 const Photographer = () => {
   return (
     <section id="photographer" className="py-20 md:py-32 relative overflow-hidden">
-      <img src="/images/bg_photographer.png" className="section-bg-image" alt="" />
       <div className="section-overlay"></div>
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
@@ -371,6 +381,7 @@ const Photographer = () => {
                 src="/images/photographer.jpeg"
                 alt="Lead Photographer"
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
             {/* Decorative elements */}
@@ -393,7 +404,7 @@ const Photographer = () => {
             </h2>
             <div className="space-y-6 text-slate-600 text-lg leading-relaxed">
               <p>
-                As the lead photographer and founder of Arrow Ads Wedding, Rahul brings a unique cinematic perspective to every frame. With a background in visual arts and a passion for storytelling, he doesn't just take pictures—he preserves emotions.
+                As the lead photographer and founder of Arrow Ads Wedding, Riyas brings a unique cinematic perspective to every frame. With a background in visual arts and a passion for storytelling, he doesn't just take pictures—he preserves emotions.
               </p>
               <p>
                 "My goal is to make you feel as beautiful and comfortable as you truly are. I believe the best shots happen in between the poses, when the real magic of your connection shines through."
@@ -425,6 +436,45 @@ const Photographer = () => {
 const Gallery = ({ images }: { images: GalleryImage[] }) => {
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
+  const handleNext = () => {
+    if (!selectedImage) return;
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id);
+    setSelectedImage(images[(currentIndex + 1) % images.length]);
+  };
+
+  const handlePrev = () => {
+    if (!selectedImage) return;
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id);
+    setSelectedImage(images[(currentIndex - 1 + images.length) % images.length]);
+  };
+
+  const touchStart = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart.current - touchEnd;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    touchStart.current = null;
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedImage) return;
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === 'Escape') setSelectedImage(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage]);
+
   if (images.length === 0) return null;
 
   return (
@@ -447,27 +497,38 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
             key={image.id}
             layoutId={`image-${image.id}`}
             onClick={() => setSelectedImage(image)}
-            className={`relative overflow-hidden cursor-pointer group rounded-sm ${image.size === 'tall' ? 'masonry-item-tall' :
-              image.size === 'short' ? 'masonry-item-short' : 'masonry-item'
-              }`}
+            className={`relative overflow-hidden cursor-pointer group rounded-sm ${
+              image.size === 'tall' ? 'masonry-item-tall aspect-[2/3]' :
+              image.size === 'short' ? 'masonry-item-short aspect-[3/2]' : 
+              'masonry-item aspect-[4/5]'
+            }`}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.4 }}
           >
-            <img
-              src={image.url}
-              alt={image.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                // Fallback to picsum if local image not found
-                (e.target as HTMLImageElement).src = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
-              }}
-            />
-            <div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center backdrop-blur-[2px] ${(image.title || image.category) ? 'bg-black/40 opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
-              <div className="text-white text-center p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                {image.title && <p className="font-serif italic text-xl md:text-2xl mb-1">{image.title}</p>}
-                {image.category && <p className="text-white/70 uppercase tracking-[0.2em] text-[8px] md:text-[10px]">{image.category}</p>}
-                {(image.title || image.category) && <div className="w-8 md:w-12 h-[1px] bg-gold mx-auto mt-4"></div>}
+            <div className="w-full h-full bg-slate-100 animate-pulse overflow-hidden rounded-sm">
+              <img
+                src={image.url}
+                alt={image.title}
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-0"
+                referrerPolicy="no-referrer"
+                onLoad={(e) => {
+                  (e.target as HTMLImageElement).classList.remove('opacity-0');
+                  (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
+                }}
+                onError={(e) => {
+                  // Fallback to picsum if local image not found
+                  (e.target as HTMLImageElement).src = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+                  (e.target as HTMLImageElement).classList.remove('opacity-0');
+                  (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
+                }}
+              />
+              <div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center backdrop-blur-[2px] ${(image.title || image.category) ? 'bg-black/40 opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
+                <div className="text-white text-center p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                  {image.title && <p className="font-serif italic text-xl md:text-2xl mb-1">{image.title}</p>}
+                  {image.category && <p className="text-white/70 uppercase tracking-[0.2em] text-[8px] md:text-[10px]">{image.category}</p>}
+                  {(image.title || image.category) && <div className="w-8 md:w-12 h-[1px] bg-gold mx-auto mt-4"></div>}
+                </div>
               </div>
             </div>
           </motion.div>
@@ -481,21 +542,42 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-10"
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
             onClick={() => setSelectedImage(null)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             <button
               className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-[110]"
-              onClick={() => setSelectedImage(null)}
+              onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
             >
               <X size={32} />
             </button>
+
+            <button 
+              className="absolute left-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-4 hidden md:block"
+              onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+            >
+              <ChevronLeft size={48} />
+            </button>
+
+            <button 
+              className="absolute right-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-4 hidden md:block"
+              onClick={(e) => { e.stopPropagation(); handleNext(); }}
+            >
+              <ChevronRight size={48} />
+            </button>
+
             <motion.img
               layoutId={`image-${selectedImage.id}`}
-              src={selectedImage.url}
+              key={selectedImage.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              src={`https://drive.google.com/thumbnail?id=${selectedImage.id}&sz=w1600`}
               alt={selectedImage.title}
               className="max-w-full max-h-full object-contain shadow-2xl"
               referrerPolicy="no-referrer"
+              onClick={(e) => e.stopPropagation()}
               onError={(e) => {
                 const index = images.findIndex(img => img.id === selectedImage.id);
                 (e.target as HTMLImageElement).src = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
@@ -534,6 +616,24 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
   const [images, setImages] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<any | null>(null);
+  const touchStart = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart.current - touchEnd;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    touchStart.current = null;
+  };
 
   useEffect(() => {
     if (albums.length > 0 && !activeAlbum) {
@@ -577,7 +677,25 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
     }
   }, [currentIndex, images]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedImage) return;
+      if (e.key === 'ArrowRight') {
+        handleNext();
+        setSelectedImage(images[(currentIndex + 1) % images.length]);
+      }
+      if (e.key === 'ArrowLeft') {
+        handlePrev();
+        setSelectedImage(images[(currentIndex - 1 + images.length) % images.length]);
+      }
+      if (e.key === 'Escape') setSelectedImage(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, currentIndex, images]);
+
   return (
+    <>
     <section id="slideshow" className="py-16 md:py-24 px-6 relative overflow-hidden">
       <div className="max-w-7xl mx-auto mb-12 text-center">
         <h2 className="text-3xl md:text-5xl italic mb-8">Albums</h2>
@@ -600,7 +718,11 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
       </div>
 
       {albums.length > 0 && (
-        <div className="max-w-5xl mx-auto relative aspect-video bg-white/50 rounded-[2rem] overflow-hidden shadow-2xl group border border-slate-100">
+        <div 
+          className="max-w-5xl mx-auto relative aspect-video bg-white/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl group border border-slate-100"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {loading ? (
              <div className="absolute inset-0 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -615,8 +737,9 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: '-100%', opacity: 0 }}
                   transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute inset-0 w-full h-full object-contain bg-black/5 backdrop-blur-sm p-4"
+                  className="absolute inset-0 w-full h-full object-contain bg-black/5 backdrop-blur-sm p-4 cursor-zoom-in"
                   referrerPolicy="no-referrer"
+                  onClick={() => setSelectedImage(images[currentIndex])}
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-slate-400 italic">No images in this album.</div>
@@ -626,6 +749,11 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
 
           {images.length > 1 && !loading && (
             <>
+              <div className="absolute top-6 right-6 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+                 <button onClick={() => setSelectedImage(images[currentIndex])} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-all">
+                    <Maximize size={20} />
+                 </button>
+              </div>
               <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
                 <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="pointer-events-auto p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-all">
                   <ChevronLeft size={24} />
@@ -644,6 +772,50 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
         </div>
       )}
     </section>
+    <AnimatePresence>
+      {selectedImage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-[110]"
+            onClick={() => setSelectedImage(null)}
+          >
+            <X size={32} />
+          </button>
+          
+          <button 
+            className="absolute left-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-4 hidden md:block"
+            onClick={(e) => { e.stopPropagation(); handlePrev(); setSelectedImage(images[(currentIndex - 1 + images.length) % images.length]); }}
+          >
+            <ChevronLeft size={48} />
+          </button>
+
+          <button 
+            className="absolute right-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-4 hidden md:block"
+            onClick={(e) => { e.stopPropagation(); handleNext(); setSelectedImage(images[(currentIndex + 1) % images.length]); }}
+          >
+            <ChevronRight size={48} />
+          </button>
+
+          <motion.img
+            key={selectedImage.id}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            src={`https://drive.google.com/thumbnail?id=${selectedImage.id}&sz=w1600`}
+            alt="Full view"
+            className="max-w-full max-h-full object-contain shadow-2xl"
+            referrerPolicy="no-referrer"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 };
 
@@ -674,7 +846,6 @@ const Contact = () => {
 
   return (
     <section id="contact" className="py-16 md:py-24 px-6 relative overflow-hidden">
-      <img src="/images/bg_contact.png" className="section-bg-image" alt="" />
       <div className="section-overlay"></div>
       <div className="bg-blob bg-blob-3 opacity-10"></div>
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 md:gap-20">
@@ -839,7 +1010,7 @@ const Footer = () => {
 };
 
 export default function MainSite() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
 
@@ -869,25 +1040,27 @@ export default function MainSite() {
           
           const configImages = config?.images || [];
 
+          const isMobile = window.innerWidth < 768;
+          
           const driveImages: GalleryImage[] = folderImages.map(file => {
-             const savedConfig = configImages.find(ci => ci.id === file.id);
-             
-             return {
+              const savedConfig = configImages.find(ci => ci.id === file.id);
+              
+              return {
                 id: file.id,
-                url: `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`,
+                url: `https://drive.google.com/thumbnail?id=${file.id}&sz=${isMobile ? 'w400' : 'w800'}`,
                 title: savedConfig?.title || '',
                 category: savedConfig?.category || '',
                 size: savedConfig?.size || 'normal',
                 order: savedConfig?.order ?? 9999
-             };
+              };
           }).sort((a, b) => a.order - b.order);
 
           setGalleryImages(driveImages);
         } else {
           setGalleryImages([]);
         }
-      } catch (error) {
-        console.error('Error loading gallery:', error);
+      } finally {
+        setIsDataLoaded(true);
       }
     };
 
@@ -903,10 +1076,10 @@ export default function MainSite() {
   return (
     <div className="min-h-screen selection:bg-gold/30 selection:text-gold">
       <AnimatePresence>
-        {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
+        {!isDataLoaded && <LoadingScreen isDataLoaded={isDataLoaded} onComplete={() => {}} />}
       </AnimatePresence>
 
-      {!isLoading && (
+      {isDataLoaded && (
         <div className="relative">
           <div className="grain-overlay"></div>
           <CustomCursor />

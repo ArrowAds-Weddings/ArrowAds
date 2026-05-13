@@ -252,7 +252,11 @@ export default function Admin() {
 
     try {
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        if (file.size > 2 * 1024 * 1024) {
+          const proceed = window.confirm(`"${file.name}" is quite large (${(file.size / 1024 / 1024).toFixed(1)}MB). Large files can slow down your website. Would you like to upload it anyway?`);
+          if (!proceed) continue;
+        }
+
         const maxNum = albumImages.length > 0 ? Math.max(...albumImages.map(img => parseInt(img.name.split('.')[0]) || 0)) : 0;
         const nextIndex = maxNum + 1 + i;
         const newFileName = `${nextIndex}.jpeg`;
@@ -300,6 +304,12 @@ export default function Admin() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        
+        if (file.size > 2 * 1024 * 1024) {
+          const proceed = window.confirm(`"${file.name}" is quite large (${(file.size / 1024 / 1024).toFixed(1)}MB). Large files can slow down your website. Would you like to upload it anyway?`);
+          if (!proceed) continue;
+        }
+
         const maxOrder = galleryItems.length > 0 ? Math.max(...galleryItems.map(item => item.order)) : 0;
         const nextIndex = maxOrder + 1;
         const newFileName = `${nextIndex}.jpeg`;
