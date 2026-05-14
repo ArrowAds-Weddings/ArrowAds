@@ -524,12 +524,16 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
                   (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
                 }}
               />
-              <div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center backdrop-blur-[2px] ${(image.title || image.category || image.description) ? 'bg-black/40 opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
-                <div className="text-white text-center p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  {image.title && <p className="font-serif italic text-xl md:text-2xl mb-1">{image.title}</p>}
-                  {image.category && <p className="text-white/70 uppercase tracking-[0.2em] text-[8px] md:text-[10px] mb-2">{image.category}</p>}
-                  {image.description && <p className="text-white/80 text-[11px] md:text-xs italic max-w-[220px] mx-auto mt-3 leading-relaxed font-light">{image.description}</p>}
-                  {(image.title || image.category || image.description) && <div className="w-8 md:w-12 h-[1px] bg-gold mx-auto mt-4"></div>}
+              <div className={`absolute inset-0 transition-all duration-500 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm bg-slate-950/60 opacity-0 group-hover:opacity-100`}>
+                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                  {image.title && <h3 className="text-white font-serif italic text-xl md:text-2xl mb-1">{image.title}</h3>}
+                  {image.category && <p className="text-gold uppercase tracking-[0.2em] text-[8px] md:text-[10px] font-bold mb-3">{image.category}</p>}
+                  {image.description && (
+                    <p className="text-white/90 text-xs md:text-sm font-light italic leading-relaxed max-w-[280px]">
+                      "{image.description}"
+                    </p>
+                  )}
+                  <div className="w-12 h-[1px] bg-gold/50 mx-auto mt-4"></div>
                 </div>
               </div>
             </div>
@@ -657,7 +661,15 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
     if (activeAlbum) {
       setLoading(true);
       fetchAlbumImages(activeAlbum.id).then(imgs => {
-        setImages(imgs);
+        // Find gallery folder config to get descriptions if this is the gallery folder
+        // Actually, slideshow images are usually different from main gallery, 
+        // but let's assume they might have descriptions in their own folder if we implement it later.
+        // For now, we'll just show the name as title.
+        setImages(imgs.map(img => ({
+          ...img,
+          title: img.name,
+          description: '' // Albums don't have descriptions in the same way yet
+        })));
         setCurrentIndex(0);
         setLoading(false);
       });
@@ -742,17 +754,33 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
           ) : (
             <AnimatePresence mode="wait">
               {images.length > 0 ? (
-                <motion.img
-                  key={currentIndex}
-                  src={`https://drive.google.com/thumbnail?id=${images[currentIndex].id}&sz=w1600`}
-                  initial={{ x: '100%', opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: '-100%', opacity: 0 }}
-                  transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute inset-0 w-full h-full object-contain bg-black/5 backdrop-blur-sm p-4 cursor-zoom-in"
-                  referrerPolicy="no-referrer"
-                  onClick={() => setSelectedImage(images[currentIndex])}
-                />
+                <div className="absolute inset-0 w-full h-full">
+                  <motion.img
+                    key={currentIndex}
+                    src={`https://drive.google.com/thumbnail?id=${images[currentIndex].id}&sz=w1600`}
+                    initial={{ x: '100%', opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: '-100%', opacity: 0 }}
+                    transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+                    className="absolute inset-0 w-full h-full object-contain bg-black/5 backdrop-blur-sm p-4 cursor-zoom-in"
+                    referrerPolicy="no-referrer"
+                    onClick={() => setSelectedImage(images[currentIndex])}
+                  />
+                  {/* Slideshow Info Overlay */}
+                  <div className="absolute bottom-16 left-0 w-full text-center z-20 pointer-events-none">
+                    <motion.div
+                      key={`info-${currentIndex}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-black/20 backdrop-blur-md inline-block px-8 py-4 rounded-2xl border border-white/10"
+                    >
+                      <h3 className="text-white font-serif italic text-xl">{images[currentIndex].title}</h3>
+                      {images[currentIndex].description && (
+                        <p className="text-white/70 text-xs italic mt-1 font-light">{images[currentIndex].description}</p>
+                      )}
+                    </motion.div>
+                  </div>
+                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-slate-400 italic">No images in this album.</div>
               )}
