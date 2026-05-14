@@ -1033,28 +1033,26 @@ export default function MainSite() {
 
       try {
         if (folderId && apiKey) {
-          const [config, fetchedAlbums, driveFiles] = await Promise.all([
-            driveService.getGalleryConfig(folderId, apiKey),
-            driveService.listAlbums(folderId, apiKey),
-            driveService.listFiles(folderId, apiKey)
-          ]);
-          
+          // 1. Fetch albums first to find if 'Gallery' folder exists
+          const fetchedAlbums = await driveService.listAlbums(folderId, apiKey);
           const galleryAlbum = fetchedAlbums.find(a => a.name.toLowerCase() === 'gallery');
+          const targetFolderId = galleryAlbum ? galleryAlbum.id : folderId;
+          
           const albumsForSlideshow = fetchedAlbums.filter(a => a.name.toLowerCase() !== 'gallery');
           setAlbums(albumsForSlideshow);
 
-          // Remove duplicates and filter out config
-          let folderImages = driveFiles.filter(f => f.name !== 'gallery.json');
-          
-          if (galleryAlbum) {
-            folderImages = await driveService.listAlbumImages(galleryAlbum.id, apiKey);
-          }
+          // 2. Fetch config and files from the target folder
+          const [config, folderImages] = await Promise.all([
+            driveService.getGalleryConfig(targetFolderId, apiKey),
+            driveService.listFiles(targetFolderId, apiKey)
+          ]);
           
           const configImages = config?.images || [];
-
           const isMobile = window.innerWidth < 768;
           
-          const driveImages: GalleryImage[] = folderImages.map(file => {
+          const driveImages: GalleryImage[] = folderImages
+            .filter(f => f.name !== 'gallery.json')
+            .map(file => {
               const savedConfig = configImages.find(ci => ci.id === file.id);
               
               return {
@@ -1062,15 +1060,18 @@ export default function MainSite() {
                 url: `https://drive.google.com/thumbnail?id=${file.id}&sz=${isMobile ? 'w400' : 'w800'}`,
                 title: savedConfig?.title || '',
                 category: savedConfig?.category || '',
+                description: savedConfig?.description || '',
                 size: savedConfig?.size || 'normal',
                 order: savedConfig?.order ?? 9999
               };
-          }).sort((a, b) => a.order - b.order);
+            }).sort((a, b) => a.order - b.order);
 
           setGalleryImages(driveImages);
         } else {
           setGalleryImages([]);
         }
+      } catch (error) {
+        console.error('Gallery Fetch Error:', error);
       } finally {
         setIsDataLoaded(true);
       }
