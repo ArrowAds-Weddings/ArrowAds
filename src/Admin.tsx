@@ -217,6 +217,13 @@ export default function Admin() {
 
   const handleDeleteAlbum = async (albumId: string) => {
     if (!accessToken) return;
+    
+    const albumToDelete = albums.find(a => a.id === albumId);
+    if (albumToDelete && (albumToDelete.name === 'Album' || albumToDelete.name === 'Gallery')) {
+      showStatus('error', `The "${albumToDelete.name}" folder is protected and cannot be deleted.`);
+      return;
+    }
+
     if (!window.confirm('Delete this entire album and all its photos?')) return;
     
     setIsSaving(true);
@@ -768,7 +775,7 @@ export default function Admin() {
                           >
                             {album.name}
                           </button>
-                          {accessToken && (
+                          {accessToken && album.name !== 'Album' && album.name !== 'Gallery' && (
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleDeleteAlbum(album.id); }}
                               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
