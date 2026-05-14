@@ -25,6 +25,7 @@ interface GalleryImage {
   url: string;
   title: string;
   category: string;
+  description?: string;
   size: 'normal' | 'tall' | 'short';
   order?: number;
 }
@@ -526,8 +527,9 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
               <div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center backdrop-blur-[2px] ${(image.title || image.category) ? 'bg-black/40 opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
                 <div className="text-white text-center p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                   {image.title && <p className="font-serif italic text-xl md:text-2xl mb-1">{image.title}</p>}
-                  {image.category && <p className="text-white/70 uppercase tracking-[0.2em] text-[8px] md:text-[10px]">{image.category}</p>}
-                  {(image.title || image.category) && <div className="w-8 md:w-12 h-[1px] bg-gold mx-auto mt-4"></div>}
+                  {image.category && <p className="text-white/70 uppercase tracking-[0.2em] text-[8px] md:text-[10px] mb-2">{image.category}</p>}
+                  {image.description && <p className="text-white/60 text-[10px] italic line-clamp-2 max-w-[200px] mx-auto">{image.description}</p>}
+                  {(image.title || image.category || image.description) && <div className="w-8 md:w-12 h-[1px] bg-gold mx-auto mt-4"></div>}
                 </div>
               </div>
             </div>
@@ -601,6 +603,16 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
                   className="text-gold uppercase tracking-[0.3em] text-[10px] md:text-xs mt-3"
                 >
                   {selectedImage.category}
+                </motion.p>
+              )}
+              {selectedImage.description && (
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-white/70 text-sm md:text-base italic mt-4 max-w-2xl mx-auto"
+                >
+                  {selectedImage.description}
                 </motion.p>
               )}
             </div>

@@ -20,7 +20,9 @@ import {
   Lock,
   User,
   Link as LinkIcon,
-  Unlink
+  Unlink,
+  MessageSquare,
+  X as CloseIcon
 } from 'lucide-react';
 import { driveService, DriveImage, GalleryConfig, DriveAlbum } from './driveService';
 
@@ -53,6 +55,7 @@ export default function Admin() {
   const [galleryFolderId, setGalleryFolderId] = useState<string | null>(FOLDER_ID);
   const [albumImages, setAlbumImages] = useState<DriveImage[]>([]);
   const [newAlbumName, setNewAlbumName] = useState('');
+  const [selectedEditItem, setSelectedEditItem] = useState<GalleryConfig['images'][0] | null>(null);
   const albumFileInputRef = useRef<HTMLInputElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -690,11 +693,14 @@ export default function Admin() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-8 group hover:shadow-xl hover:shadow-slate-200/50 transition-all"
-                        >
-                          {/* Image Thumbnail */}                           <div className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-50 flex-shrink-0 relative border border-slate-100 shadow-inner">
+                        >                          {/* Image Thumbnail */}                           
+                          <div 
+                            onClick={() => setSelectedEditItem(item)}
+                            className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-50 flex-shrink-0 relative border border-slate-100 shadow-inner cursor-pointer group/thumb"
+                          >
                              <img 
                                 src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w400`}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-110" 
                                 alt={item.title}
                                 onLoad={(e) => (e.currentTarget.style.opacity = '1')}
                                 style={{ opacity: 0.1, transition: 'opacity 0.5s' }}
@@ -702,8 +708,11 @@ export default function Admin() {
                                   (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Wait...';
                                 }}
                              />
+                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                <MessageSquare className="text-white w-6 h-6" />
+                             </div>
                              <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-gold text-[9px] px-2 py-1 rounded-lg uppercase font-bold tracking-wider">
-                               #{index + 1}
+                                #{index + 1}
                              </div>
                           </div>
 
@@ -928,6 +937,116 @@ export default function Admin() {
             <p className="text-slate-900 font-serif text-2xl tracking-[0.1em] text-center max-w-sm uppercase italic">
               Synchronizing with Cloud Storage...
             </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {selectedEditItem && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-6"
+            onClick={() => setSelectedEditItem(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Left Side: Image Preview */}
+              <div className="w-full md:w-1/2 bg-slate-100 relative group">
+                <img 
+                  src={`https://drive.google.com/thumbnail?id=${selectedEditItem.id}&sz=w1600`}
+                  className="w-full h-full object-cover min-h-[400px]"
+                  alt="Preview"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                <div className="absolute bottom-8 left-8">
+                  <p className="text-gold uppercase tracking-[0.3em] text-[10px] font-bold mb-1">Editing Moment</p>
+                  <h3 className="text-white font-serif text-2xl italic">{selectedEditItem.title || 'Untitled Moment'}</h3>
+                </div>
+              </div>
+
+              {/* Right Side: Form */}
+              <div className="w-full md:w-1/2 p-10 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-serif italic text-slate-900">Customize Message</h2>
+                    <button 
+                      onClick={() => setSelectedEditItem(null)}
+                      className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+                    >
+                      <CloseIcon size={24} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2 block">Moments Caption</label>
+                      <input 
+                        type="text" 
+                        value={selectedEditItem.title}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleUpdateItem(selectedEditItem.id, 'title', val);
+                          setSelectedEditItem(prev => prev ? { ...prev, title: val } : null);
+                        }}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 text-slate-900 focus:border-gold outline-none transition-all font-serif text-lg"
+                        placeholder="e.g. The First Dance"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2 block">Sub-Message / Category</label>
+                      <input 
+                        type="text" 
+                        value={selectedEditItem.category}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleUpdateItem(selectedEditItem.id, 'category', val);
+                          setSelectedEditItem(prev => prev ? { ...prev, category: val } : null);
+                        }}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 text-slate-500 focus:border-gold outline-none transition-all text-sm"
+                        placeholder="e.g. Photography"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2 block">Small Custom Message (Displayed on Website)</label>
+                      <textarea 
+                        rows={4}
+                        value={selectedEditItem.description || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleUpdateItem(selectedEditItem.id, 'description', val);
+                          setSelectedEditItem(prev => prev ? { ...prev, description: val } : null);
+                        }}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 text-slate-700 focus:border-gold outline-none transition-all text-sm resize-none"
+                        placeholder="Write a small message to be displayed in the gallery..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-slate-400">
+                    <CheckCircle2 size={14} className="text-green-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Changes auto-synced locally</span>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedEditItem(null)}
+                    className="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-gold transition-all"
+                  >
+                    Done Editing
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

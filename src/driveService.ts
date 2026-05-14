@@ -22,6 +22,7 @@ export interface GalleryConfig {
     filename: string;
     title: string;
     category: string;
+    description?: string;
     size: 'normal' | 'tall' | 'short';
     order: number;
   }[];
