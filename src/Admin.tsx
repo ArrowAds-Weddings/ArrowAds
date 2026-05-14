@@ -51,6 +51,7 @@ export default function Admin() {
   // Album states
   const [albums, setAlbums] = useState<DriveAlbum[]>([]);
   const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null);
+  const [galleryFolderId, setGalleryFolderId] = useState<string | null>(FOLDER_ID);
   const [albumImages, setAlbumImages] = useState<DriveImage[]>([]);
   const [newAlbumName, setNewAlbumName] = useState('');
   const albumFileInputRef = useRef<HTMLInputElement>(null);
@@ -159,10 +160,15 @@ export default function Admin() {
       }
 
       // We only need API_KEY for fetching/viewing
-      const [driveFiles, galleryConfig, fetchedAlbums] = await Promise.all([
-        driveService.listFiles(FOLDER_ID, API_KEY),
-        driveService.getGalleryConfig(FOLDER_ID, API_KEY),
-        driveService.listAlbums(FOLDER_ID, API_KEY)
+      const fetchedAlbums = await driveService.listAlbums(FOLDER_ID, API_KEY);
+      const galleryFolder = fetchedAlbums.find(a => a.name === 'Gallery');
+      const targetGalleryFolderId = galleryFolder ? galleryFolder.id : FOLDER_ID;
+      
+      setGalleryFolderId(targetGalleryFolderId);
+
+      const [driveFiles, galleryConfig] = await Promise.all([
+        driveService.listFiles(targetGalleryFolderId, API_KEY),
+        driveService.getGalleryConfig(targetGalleryFolderId, API_KEY)
       ]);
 
       const configImages = galleryConfig?.images || [];
@@ -173,10 +179,11 @@ export default function Admin() {
       setUntrackedImages(untracked);
       setAllDriveImages(driveFiles);
 
-      setAlbums(fetchedAlbums);
-      if (fetchedAlbums.length > 0) {
-        setActiveAlbumId(fetchedAlbums[0].id);
-        fetchAlbumImages(fetchedAlbums[0].id);
+      const filteredAlbums = fetchedAlbums.filter(a => a.name !== 'Gallery');
+      setAlbums(filteredAlbums);
+      if (filteredAlbums.length > 0) {
+        setActiveAlbumId(filteredAlbums[0].id);
+        fetchAlbumImages(filteredAlbums[0].id);
       }
       
     } catch (error) {
@@ -259,6 +266,7 @@ export default function Admin() {
 
     try {
       for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         if (file.size > 2 * 1024 * 1024) {
           const proceed = window.confirm(`"${file.name}" is quite large (${(file.size / 1024 / 1024).toFixed(1)}MB). Large files can slow down your website. Would you like to upload it anyway?`);
           if (!proceed) continue;
@@ -322,7 +330,7 @@ export default function Admin() {
         const newFileName = `${nextIndex}.jpeg`;
         const renamedFile = new File([file], newFileName, { type: file.type });
 
-        const uploadedFile = await driveService.uploadFile(renamedFile, FOLDER_ID, accessToken);
+        const uploadedFile = await driveService.uploadFile(renamedFile, galleryFolderId || FOLDER_ID, accessToken);
         const newItem = {
           id: uploadedFile.id,
           filename: newFileName,
@@ -373,7 +381,7 @@ export default function Admin() {
     setIsSaving(true);
     try {
       const config: GalleryConfig = { images: galleryItems };
-      await driveService.saveGalleryConfig(FOLDER_ID, config, accessToken);
+      await driveService.saveGalleryConfig(galleryFolderId || FOLDER_ID, config, accessToken);
       showStatus('success', 'Saved to Drive!');
     } catch (error) {
       showStatus('error', 'Failed to save config.');
