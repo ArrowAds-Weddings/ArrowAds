@@ -524,11 +524,11 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
                   (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
                 }}
               />
-              <div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center backdrop-blur-[2px] ${(image.title || image.category) ? 'bg-black/40 opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
+              <div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center backdrop-blur-[2px] ${(image.title || image.category || image.description) ? 'bg-black/40 opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
                 <div className="text-white text-center p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                   {image.title && <p className="font-serif italic text-xl md:text-2xl mb-1">{image.title}</p>}
                   {image.category && <p className="text-white/70 uppercase tracking-[0.2em] text-[8px] md:text-[10px] mb-2">{image.category}</p>}
-                  {image.description && <p className="text-white/60 text-[10px] italic line-clamp-2 max-w-[200px] mx-auto">{image.description}</p>}
+                  {image.description && <p className="text-white/80 text-[11px] md:text-xs italic max-w-[220px] mx-auto mt-3 leading-relaxed font-light">{image.description}</p>}
                   {(image.title || image.category || image.description) && <div className="w-8 md:w-12 h-[1px] bg-gold mx-auto mt-4"></div>}
                 </div>
               </div>
