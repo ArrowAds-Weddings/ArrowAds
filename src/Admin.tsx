@@ -44,7 +44,6 @@ export default function Admin() {
   const [isSaving, setIsSaving] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryConfig['images']>([]);
   const [untrackedImages, setUntrackedImages] = useState<DriveImage[]>([]);
-  const [allDriveImages, setAllDriveImages] = useState<DriveImage[]>([]);
   const [activeTab, setActiveTab] = useState<'gallery' | 'albums'>('gallery');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -161,7 +160,7 @@ export default function Admin() {
 
       // We only need API_KEY for fetching/viewing
       const fetchedAlbums = await driveService.listAlbums(FOLDER_ID, API_KEY);
-      const galleryFolder = fetchedAlbums.find(a => a.name === 'Gallery');
+      const galleryFolder = fetchedAlbums.find(a => a.name.toLowerCase() === 'gallery');
       const targetGalleryFolderId = galleryFolder ? galleryFolder.id : FOLDER_ID;
       
       setGalleryFolderId(targetGalleryFolderId);
@@ -177,9 +176,8 @@ export default function Admin() {
       
       setGalleryItems(configImages.sort((a, b) => a.order - b.order));
       setUntrackedImages(untracked);
-      setAllDriveImages(driveFiles);
 
-      const filteredAlbums = fetchedAlbums.filter(a => a.name !== 'Gallery');
+      const filteredAlbums = fetchedAlbums.filter(a => a.name.toLowerCase() !== 'gallery');
       setAlbums(filteredAlbums);
       if (filteredAlbums.length > 0) {
         setActiveAlbumId(filteredAlbums[0].id);
@@ -226,7 +224,7 @@ export default function Admin() {
     if (!accessToken) return;
     
     const albumToDelete = albums.find(a => a.id === albumId);
-    if (albumToDelete && (albumToDelete.name === 'Album' || albumToDelete.name === 'Gallery')) {
+    if (albumToDelete && (albumToDelete.name.toLowerCase() === 'album' || albumToDelete.name.toLowerCase() === 'gallery')) {
       showStatus('error', `The "${albumToDelete.name}" folder is protected and cannot be deleted.`);
       return;
     }
@@ -305,6 +303,36 @@ export default function Admin() {
     }
   };
 
+  const handleImportOne = (img: DriveImage) => {
+    const maxOrder = galleryItems.length > 0 ? Math.max(...galleryItems.map(item => item.order)) : 0;
+    const newItem = {
+      id: img.id,
+      filename: img.name,
+      title: 'New Wedding Moment',
+      category: 'Photography',
+      size: 'normal' as const,
+      order: maxOrder + 1
+    };
+    setGalleryItems(prev => [...prev, newItem].sort((a, b) => a.order - b.order));
+    setUntrackedImages(prev => prev.filter(f => f.id !== img.id));
+    showStatus('success', 'Photo added to collection! Save to finalize.');
+  };
+
+  const handleImportAll = () => {
+    const maxOrder = galleryItems.length > 0 ? Math.max(...galleryItems.map(item => item.order)) : 0;
+    const newItems = untrackedImages.map((img, idx) => ({
+      id: img.id,
+      filename: img.name,
+      title: 'New Wedding Moment',
+      category: 'Photography',
+      size: 'normal' as const,
+      order: maxOrder + idx + 1
+    }));
+    setGalleryItems(prev => [...prev, ...newItems].sort((a, b) => a.order - b.order));
+    setUntrackedImages([]);
+    showStatus('success', `${untrackedImages.length} photos added! Save to finalize.`);
+  };
+
   // --- Image Actions ---
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -361,6 +389,7 @@ export default function Admin() {
     try {
       await driveService.deleteFile(id, accessToken);
       setGalleryItems(prev => prev.filter(item => item.id !== id));
+      setUntrackedImages(prev => prev.filter(item => item.id !== id));
       showStatus('success', 'Image removed.');
     } catch (error) {
       showStatus('error', 'Delete failed.');
@@ -662,13 +691,9 @@ export default function Admin() {
                           animate={{ opacity: 1 }}
                           className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-8 group hover:shadow-xl hover:shadow-slate-200/50 transition-all"
                         >
-                          {/* Image Thumbnail */}
-                          <div className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-50 flex-shrink-0 relative border border-slate-100 shadow-inner">
+                          {/* Image Thumbnail */}                           <div className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-50 flex-shrink-0 relative border border-slate-100 shadow-inner">
                              <img 
-                                src={(() => {
-                                  const dImg = allDriveImages.find(f => f.id === item.id);
-                                  return `https://drive.google.com/thumbnail?id=${item.id}&sz=w400`;
-                                })()}
+                                src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w400`}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                 alt={item.title}
                                 onLoad={(e) => (e.currentTarget.style.opacity = '1')}
@@ -745,6 +770,47 @@ export default function Admin() {
                     </div>
                   )}
                 </div>
+
+                {/* Untracked Images Section */}
+                {untrackedImages.length > 0 && (
+                  <div className="mt-16 bg-slate-900/5 p-10 rounded-[3rem] border border-slate-200 border-dashed relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700"></div>
+                    
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                      <div>
+                        <h3 className="font-serif italic text-2xl text-slate-900 mb-2">New Photos Detected</h3>
+                        <p className="text-slate-500 text-xs tracking-widest uppercase font-bold">Found {untrackedImages.length} images in folder but not in collection</p>
+                      </div>
+                      <button 
+                        onClick={handleImportAll}
+                        className="px-6 py-3 bg-slate-900 text-gold rounded-xl text-[10px] font-black tracking-[0.2em] hover:bg-gold hover:text-slate-950 transition-all shadow-xl shadow-slate-900/10 uppercase"
+                      >
+                        Add All to Collection
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                      {untrackedImages.map(img => (
+                        <motion.div 
+                          key={img.id}
+                          whileHover={{ y: -5 }}
+                          className="relative group rounded-[2rem] overflow-hidden aspect-square bg-white shadow-sm border border-slate-100"
+                        >
+                          <img src={`https://drive.google.com/thumbnail?id=${img.id}&sz=w400`} className="w-full h-full object-cover" alt={img.name} />
+                          <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center p-4 backdrop-blur-[2px]">
+                            <p className="text-white text-[10px] font-bold mb-4 text-center line-clamp-1">{img.name}</p>
+                            <button 
+                              onClick={() => handleImportOne(img)}
+                              className="px-4 py-2 bg-gold text-slate-950 rounded-lg text-[9px] font-black tracking-widest uppercase hover:bg-white transition-colors"
+                            >
+                              Add Image
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
