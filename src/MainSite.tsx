@@ -492,16 +492,16 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
         <h2 className="text-3xl md:text-5xl italic">Captured Moments</h2>
       </motion.div>
 
-      <div className="max-w-7xl mx-auto masonry-grid gap-4">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         {images.map((image, index) => (
           <motion.div
             key={image.id}
             layoutId={`image-${image.id}`}
             onClick={() => setSelectedImage(image)}
             className={`relative overflow-hidden cursor-pointer group rounded-sm ${
-              image.size === 'tall' ? 'masonry-item-tall aspect-[2/3]' :
-              image.size === 'short' ? 'masonry-item-short aspect-[3/2]' : 
-              'masonry-item aspect-[4/5]'
+              image.size === 'tall' ? 'aspect-[2/3]' :
+              image.size === 'short' ? 'aspect-[3/2]' : 
+              'aspect-[4/5]'
             }`}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.4 }}

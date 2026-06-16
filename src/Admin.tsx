@@ -694,6 +694,44 @@ export default function Admin() {
                   <span className="text-[10px] uppercase font-bold tracking-widest text-white/50">Total: {galleryItems.length}</span>
                </div>
             </div>
+
+            {/* Live Preview Widget */}
+            {galleryItems.length > 0 && (
+              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                </div>
+                
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl shadow-inner max-h-[400px] overflow-y-auto space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {galleryItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`relative overflow-hidden rounded-lg ${
+                          item.size === 'tall' ? 'aspect-[2/3]' :
+                          item.size === 'short' ? 'aspect-[3/2]' : 
+                          'aspect-[4/5]'
+                        }`}
+                      >
+                        <img
+                          src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w200`}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
+                          <span className="text-[8px] text-white font-serif italic line-clamp-2">{item.title}</span>
+                        </div>
+                        <div className="absolute top-1 left-1 bg-slate-900/80 text-[8px] text-gold px-1 rounded font-bold">
+                          #{item.order}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </aside>
 
           {/* Content Area */}
@@ -726,60 +764,6 @@ export default function Admin() {
                   <div className="h-48 bg-slate-100 rounded-[2rem] flex flex-col items-center justify-center border border-slate-200 border-dashed grayscale">
                     <Unlink className="text-slate-300 w-10 h-10 mb-4" />
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Link Google Drive to Upload</p>
-                  </div>
-                )}
-
-                {/* Live Preview Section */}
-                {galleryItems.length > 0 && (
-                  <div className="bg-white/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                      <div>
-                        <h3 className="font-serif italic text-lg text-slate-900">Gallery Live Preview</h3>
-                        <p className="text-slate-400 text-[10px] uppercase tracking-widest mt-0.5">Real-time preview of unsaved layouts & captions</p>
-                      </div>
-                      <div className="h-[1px] flex-1 bg-slate-100 mx-8"></div>
-                    </div>
-
-                    <div className="p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] shadow-inner max-w-5xl mx-auto">
-                      <div className="text-center mb-8">
-                        <span className="text-gold uppercase tracking-widest text-[9px] font-semibold mb-2 block">The Gallery</span>
-                        <h2 className="text-2xl md:text-3xl italic font-serif text-slate-950">Captured Moments</h2>
-                      </div>
-
-                      <div className="masonry-grid gap-4">
-                        {galleryItems.map((item, index) => (
-                          <div
-                            key={item.id}
-                            className={`relative overflow-hidden group rounded-sm masonry-item ${
-                              item.size === 'tall' ? 'masonry-item-tall aspect-[2/3]' :
-                              item.size === 'short' ? 'masonry-item-short aspect-[3/2]' : 
-                              'masonry-item aspect-[4/5]'
-                            }`}
-                          >
-                            <div className="w-full h-full bg-slate-100 overflow-hidden rounded-sm">
-                              <img
-                                src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w800`}
-                                alt={item.title}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="absolute inset-0 transition-all duration-500 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm bg-slate-950/60 opacity-0 group-hover:opacity-100">
-                                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                                  {item.title && <h3 className="text-white font-serif italic text-base md:text-lg mb-1">{item.title}</h3>}
-                                  {item.category && <p className="text-gold uppercase tracking-[0.2em] text-[7px] md:text-[8px] font-bold mb-2">{item.category}</p>}
-                                  {item.description && (
-                                    <p className="text-white/90 text-[10px] md:text-xs font-light italic leading-relaxed max-w-[200px]">
-                                      "{item.description}"
-                                    </p>
-                                  )}
-                                  <div className="w-8 h-[1px] bg-gold/50 mx-auto mt-3"></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 )}
 
