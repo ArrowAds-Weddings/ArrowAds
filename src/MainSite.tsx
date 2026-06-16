@@ -664,10 +664,10 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
         // Find gallery folder config to get descriptions if this is the gallery folder
         // Actually, slideshow images are usually different from main gallery, 
         // but let's assume they might have descriptions in their own folder if we implement it later.
-        // For now, we'll just show the name as title.
+        // For now, we do not show the file name as title.
         setImages(imgs.map(img => ({
           ...img,
-          title: img.name,
+          title: '', // Don't show filename as title
           description: '' // Albums don't have descriptions in the same way yet
         })));
         setCurrentIndex(0);
@@ -767,19 +767,21 @@ const AlbumSlideshow = ({ albums, fetchAlbumImages }: { albums: any[], fetchAlbu
                     onClick={() => setSelectedImage(images[currentIndex])}
                   />
                   {/* Slideshow Info Overlay */}
-                  <div className="absolute bottom-16 left-0 w-full text-center z-20 pointer-events-none">
-                    <motion.div
-                      key={`info-${currentIndex}`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-black/20 backdrop-blur-md inline-block px-8 py-4 rounded-2xl border border-white/10"
-                    >
-                      <h3 className="text-white font-serif italic text-xl">{images[currentIndex].title}</h3>
-                      {images[currentIndex].description && (
-                        <p className="text-white/70 text-xs italic mt-1 font-light">{images[currentIndex].description}</p>
-                      )}
-                    </motion.div>
-                  </div>
+                  {(images[currentIndex].title || images[currentIndex].description) && (
+                    <div className="absolute bottom-16 left-0 w-full text-center z-20 pointer-events-none">
+                      <motion.div
+                        key={`info-${currentIndex}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-black/20 backdrop-blur-md inline-block px-8 py-4 rounded-2xl border border-white/10"
+                      >
+                        {images[currentIndex].title && <h3 className="text-white font-serif italic text-xl">{images[currentIndex].title}</h3>}
+                        {images[currentIndex].description && (
+                          <p className="text-white/70 text-xs italic mt-1 font-light">{images[currentIndex].description}</p>
+                        )}
+                      </motion.div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-slate-400 italic">No images in this album.</div>

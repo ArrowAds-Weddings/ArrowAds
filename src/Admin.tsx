@@ -36,6 +36,7 @@ export default function Admin() {
   // Authentication states
   const [isLocalAuthenticated, setIsLocalAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('remember_me') === 'true');
   
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -64,7 +65,7 @@ export default function Admin() {
   // --- Auth & Session Logic ---
   useEffect(() => {
     // 1. Check local session
-    const localAuth = sessionStorage.getItem('admin_auth');
+    const localAuth = localStorage.getItem('admin_auth') || sessionStorage.getItem('admin_auth');
     if (localAuth === 'true') {
       setIsLocalAuthenticated(true);
     }
@@ -86,8 +87,10 @@ export default function Admin() {
                console.error('Google Auth Error:', response);
                return;
             }
+            const expiresAt = Date.now() + (response.expires_in || 3600) * 1000;
             setAccessToken(response.access_token);
-            sessionStorage.setItem('drive_token', response.access_token);
+            localStorage.setItem('drive_token', response.access_token);
+            localStorage.setItem('drive_token_expires_at', expiresAt.toString());
             showStatus('success', 'Google Drive linked successfully!');
           },
         });
@@ -106,9 +109,13 @@ export default function Admin() {
     const timer = setTimeout(initGis, 1000);
 
     // 3. Check drive token session
-    const savedToken = sessionStorage.getItem('drive_token');
-    if (savedToken) {
+    const savedToken = localStorage.getItem('drive_token');
+    const expiresAt = localStorage.getItem('drive_token_expires_at');
+    if (savedToken && expiresAt && Date.now() < parseInt(expiresAt)) {
       setAccessToken(savedToken);
+    } else {
+      localStorage.removeItem('drive_token');
+      localStorage.removeItem('drive_token_expires_at');
     }
     
     setIsLoading(false);
@@ -123,7 +130,14 @@ export default function Admin() {
     e.preventDefault();
     if (loginUsername === ADMIN_USER && loginPassword === ADMIN_PASS) {
       setIsLocalAuthenticated(true);
-      sessionStorage.setItem('admin_auth', 'true');
+      if (rememberMe) {
+        localStorage.setItem('admin_auth', 'true');
+        localStorage.setItem('remember_me', 'true');
+      } else {
+        sessionStorage.setItem('admin_auth', 'true');
+        localStorage.removeItem('remember_me');
+        localStorage.removeItem('admin_auth');
+      }
       setLoginError('');
     } else {
       setLoginError('Invalid credentials. Access denied.');
@@ -142,7 +156,21 @@ export default function Admin() {
     setIsLocalAuthenticated(false);
     setAccessToken(null);
     sessionStorage.removeItem('admin_auth');
-    sessionStorage.removeItem('drive_token');
+    localStorage.removeItem('admin_auth');
+    localStorage.removeItem('drive_token');
+    localStorage.removeItem('drive_token_expires_at');
+  };
+
+  const handleDriveError = (error: any, fallbackMessage: string) => {
+    console.error(error);
+    if (error.response && error.response.status === 401) {
+      setAccessToken(null);
+      localStorage.removeItem('drive_token');
+      localStorage.removeItem('drive_token_expires_at');
+      showStatus('error', 'Google Drive session expired. Please reconnect.');
+    } else {
+      showStatus('error', fallbackMessage);
+    }
   };
 
   // --- Data Loading ---
@@ -217,7 +245,7 @@ export default function Admin() {
       setAlbumImages([]);
       showStatus('success', 'Album created!');
     } catch (error) {
-      showStatus('error', 'Failed to create album.');
+      handleDriveError(error, 'Failed to create album.');
     } finally {
       setIsSaving(false);
     }
@@ -252,7 +280,7 @@ export default function Admin() {
       }
       showStatus('success', 'Album deleted.');
     } catch (error) {
-      showStatus('error', 'Failed to delete album.');
+      handleDriveError(error, 'Failed to delete album.');
     } finally {
       setIsSaving(false);
     }
@@ -283,7 +311,7 @@ export default function Admin() {
       }
       showStatus('success', 'Upload to album complete!');
     } catch (error) {
-      showStatus('error', 'Upload failed.');
+      handleDriveError(error, 'Upload failed.');
     } finally {
       setIsSaving(false);
       if (albumFileInputRef.current) albumFileInputRef.current.value = '';
@@ -300,7 +328,7 @@ export default function Admin() {
       setAlbumImages(prev => prev.filter(item => item.id !== id));
       showStatus('success', 'Image removed from album.');
     } catch (error) {
-      showStatus('error', 'Delete failed.');
+      handleDriveError(error, 'Delete failed.');
     } finally {
       setIsSaving(false);
     }
@@ -374,7 +402,7 @@ export default function Admin() {
       }
       showStatus('success', 'Upload complete! Don\'t forget to save.');
     } catch (error) {
-      showStatus('error', 'Upload failed. Check permissions.');
+      handleDriveError(error, 'Upload failed. Check permissions.');
     } finally {
       setIsSaving(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -395,7 +423,7 @@ export default function Admin() {
       setUntrackedImages(prev => prev.filter(item => item.id !== id));
       showStatus('success', 'Image removed.');
     } catch (error) {
-      showStatus('error', 'Delete failed.');
+      handleDriveError(error, 'Delete failed.');
     } finally {
       setIsSaving(false);
     }
@@ -416,7 +444,7 @@ export default function Admin() {
       await driveService.saveGalleryConfig(galleryFolderId || FOLDER_ID, config, accessToken);
       showStatus('success', 'Saved to Drive!');
     } catch (error) {
-      showStatus('error', 'Failed to save config.');
+      handleDriveError(error, 'Failed to save config.');
     } finally {
       setIsSaving(false);
     }
@@ -480,6 +508,19 @@ export default function Admin() {
                   autoComplete="current-password"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pl-1 py-1">
+              <input 
+                type="checkbox" 
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-white/10 bg-white/5 text-gold focus:ring-0 focus:ring-offset-0 cursor-pointer accent-gold w-4 h-4"
+              />
+              <label htmlFor="rememberMe" className="text-xs text-slate-400 select-none cursor-pointer">
+                Remember my login session
+              </label>
             </div>
             
             <AnimatePresence>
