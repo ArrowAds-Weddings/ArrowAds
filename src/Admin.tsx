@@ -743,7 +743,7 @@ export default function Admin() {
 
             {/* Live Preview Widget */}
             {galleryItems.length > 0 && (
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+              <div className="sticky top-8 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4 max-h-[calc(100vh-4rem)] overflow-y-auto pr-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
