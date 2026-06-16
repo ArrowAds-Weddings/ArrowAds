@@ -696,42 +696,52 @@ export default function Admin() {
             </div>
 
             {/* Live Preview Widget */}
-            {galleryItems.length > 0 && (
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                </div>
-                
-                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl shadow-inner max-h-[400px] overflow-y-auto space-y-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    {galleryItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`relative overflow-hidden rounded-lg ${
-                          item.size === 'tall' ? 'aspect-[2/3]' :
-                          item.size === 'short' ? 'aspect-[3/2]' : 
-                          'aspect-[4/5]'
-                        }`}
-                      >
-                        <img
-                          src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w200`}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
-                          <span className="text-[8px] text-white font-serif italic line-clamp-2">{item.title}</span>
+            {galleryItems.length > 0 && (() => {
+              const previewCols: typeof galleryItems[] = [[], [], []];
+              galleryItems.forEach((item, idx) => {
+                previewCols[idx % 3].push(item);
+              });
+              return (
+                <div className="sticky top-24 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  </div>
+                  
+                  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl shadow-inner max-h-[400px] overflow-y-auto space-y-3">
+                    <div className="grid grid-cols-3 gap-2 items-start">
+                      {previewCols.map((col, colIdx) => (
+                        <div key={colIdx} className="flex flex-col gap-2">
+                          {col.map((item) => (
+                            <div
+                              key={item.id}
+                              className={`relative overflow-hidden rounded-lg ${
+                                item.size === 'tall' ? 'aspect-[2/3]' :
+                                item.size === 'short' ? 'aspect-[3/2]' : 
+                                'aspect-[4/5]'
+                              }`}
+                            >
+                              <img
+                                src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w200`}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
+                                <span className="text-[8px] text-white font-serif italic line-clamp-2">{item.title}</span>
+                              </div>
+                              <div className="absolute top-1 left-1 bg-slate-900/80 text-[8px] text-gold px-1 rounded font-bold">
+                                #{item.order}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="absolute top-1 left-1 bg-slate-900/80 text-[8px] text-gold px-1 rounded font-bold">
-                          #{item.order}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </aside>
 
           {/* Content Area */}

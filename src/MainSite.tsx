@@ -436,6 +436,22 @@ const Photographer = () => {
 
 const Gallery = ({ images }: { images: GalleryImage[] }) => {
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+  const [columnsCount, setColumnsCount] = useState(3);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setColumnsCount(1);
+      } else if (window.innerWidth < 1024) {
+        setColumnsCount(2);
+      } else {
+        setColumnsCount(3);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleNext = () => {
     if (!selectedImage) return;
@@ -478,6 +494,12 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
 
   if (images.length === 0) return null;
 
+  // Distribute images sequentially across columns to allow left-to-right order and vertical masonry stacking
+  const columns: GalleryImage[][] = Array.from({ length: columnsCount }, () => []);
+  images.forEach((image, index) => {
+    columns[index % columnsCount].push(image);
+  });
+
   return (
     <section id="gallery" className="py-16 md:py-24 px-6 relative overflow-hidden">
       <div className="bg-blob bg-blob-2 opacity-10"></div>
@@ -492,52 +514,61 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
         <h2 className="text-3xl md:text-5xl italic">Captured Moments</h2>
       </motion.div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-        {images.map((image, index) => (
-          <motion.div
-            key={image.id}
-            layoutId={`image-${image.id}`}
-            onClick={() => setSelectedImage(image)}
-            className={`relative overflow-hidden cursor-pointer group rounded-sm ${
-              image.size === 'tall' ? 'aspect-[2/3]' :
-              image.size === 'short' ? 'aspect-[3/2]' : 
-              'aspect-[4/5]'
-            }`}
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.4 }}
-          >
-            <div className="w-full h-full bg-slate-100 animate-pulse overflow-hidden rounded-sm">
-              <img
-                src={image.url}
-                alt={image.title}
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-0"
-                referrerPolicy="no-referrer"
-                onLoad={(e) => {
-                  (e.target as HTMLImageElement).classList.remove('opacity-0');
-                  (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
-                }}
-                onError={(e) => {
-                  // Fallback to picsum if local image not found
-                  (e.target as HTMLImageElement).src = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
-                  (e.target as HTMLImageElement).classList.remove('opacity-0');
-                  (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
-                }}
-              />
-              <div className={`absolute inset-0 transition-all duration-500 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm bg-slate-950/60 opacity-0 group-hover:opacity-100`}>
-                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  {image.title && <h3 className="text-white font-serif italic text-xl md:text-2xl mb-1">{image.title}</h3>}
-                  {image.category && <p className="text-gold uppercase tracking-[0.2em] text-[8px] md:text-[10px] font-bold mb-3">{image.category}</p>}
-                  {image.description && (
-                    <p className="text-white/90 text-xs md:text-sm font-light italic leading-relaxed max-w-[280px]">
-                      "{image.description}"
-                    </p>
-                  )}
-                  <div className="w-12 h-[1px] bg-gold/50 mx-auto mt-4"></div>
+      <div className={`max-w-7xl mx-auto grid gap-4 ${
+        columnsCount === 1 ? 'grid-cols-1' :
+        columnsCount === 2 ? 'grid-cols-2' :
+        'grid-cols-3'
+      }`}>
+        {columns.map((col, colIdx) => (
+          <div key={colIdx} className="flex flex-col gap-4">
+            {col.map((image) => (
+              <motion.div
+                key={image.id}
+                layoutId={`image-${image.id}`}
+                onClick={() => setSelectedImage(image)}
+                className={`relative overflow-hidden cursor-pointer group rounded-sm ${
+                  image.size === 'tall' ? 'aspect-[2/3]' :
+                  image.size === 'short' ? 'aspect-[3/2]' : 
+                  'aspect-[4/5]'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div className="w-full h-full bg-slate-100 animate-pulse overflow-hidden rounded-sm">
+                  <img
+                    src={image.url}
+                    alt={image.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-0"
+                    referrerPolicy="no-referrer"
+                    onLoad={(e) => {
+                      (e.target as HTMLImageElement).classList.remove('opacity-0');
+                      (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
+                    }}
+                    onError={(e) => {
+                      // Fallback to picsum if local image not found
+                      const fallbackIndex = images.findIndex(img => img.id === image.id);
+                      (e.target as HTMLImageElement).src = FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
+                      (e.target as HTMLImageElement).classList.remove('opacity-0');
+                      (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
+                    }}
+                  />
+                  <div className={`absolute inset-0 transition-all duration-500 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm bg-slate-950/60 opacity-0 group-hover:opacity-100`}>
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      {image.title && <h3 className="text-white font-serif italic text-xl md:text-2xl mb-1">{image.title}</h3>}
+                      {image.category && <p className="text-gold uppercase tracking-[0.2em] text-[8px] md:text-[10px] font-bold mb-3">{image.category}</p>}
+                      {image.description && (
+                        <p className="text-white/90 text-xs md:text-sm font-light italic leading-relaxed max-w-[280px]">
+                          "{image.description}"
+                        </p>
+                      )}
+                      <div className="w-12 h-[1px] bg-gold/50 mx-auto mt-4"></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
+            ))}
+          </div>
         ))}
       </div>
 
