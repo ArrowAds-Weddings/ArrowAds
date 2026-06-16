@@ -33,7 +33,6 @@ const ADMIN_USER = import.meta.env.VITE_ADMIN_USERNAME || 'Admin';
 const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || '123123123';
 
 const PreviewImage = React.memo(({ item }: { item: GalleryConfig['images'][0] }) => {
-  const [loaded, setLoaded] = useState(false);
   const src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w200`;
 
   return (
@@ -47,9 +46,8 @@ const PreviewImage = React.memo(({ item }: { item: GalleryConfig['images'][0] })
       <img
         src={src}
         alt={item.title}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className="w-full h-full object-cover"
         referrerPolicy="no-referrer"
-        onLoad={() => setLoaded(true)}
       />
       <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
         <span className="text-[8px] text-white font-serif italic line-clamp-2">{item.title}</span>

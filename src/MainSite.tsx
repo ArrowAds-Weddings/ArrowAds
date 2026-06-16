@@ -534,23 +534,17 @@ const Gallery = ({ images }: { images: GalleryImage[] }) => {
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.4 }}
               >
-                <div className="w-full h-full bg-slate-100 animate-pulse overflow-hidden rounded-sm">
+                <div className="w-full h-full bg-slate-100 overflow-hidden rounded-sm">
                   <img
                     src={image.url}
                     alt={image.title}
                     loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-0"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     referrerPolicy="no-referrer"
-                    onLoad={(e) => {
-                      (e.target as HTMLImageElement).classList.remove('opacity-0');
-                      (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
-                    }}
                     onError={(e) => {
                       // Fallback to picsum if local image not found
                       const fallbackIndex = images.findIndex(img => img.id === image.id);
                       (e.target as HTMLImageElement).src = FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
-                      (e.target as HTMLImageElement).classList.remove('opacity-0');
-                      (e.target as HTMLImageElement).parentElement?.classList.remove('animate-pulse', 'bg-slate-100');
                     }}
                   />
                   <div className={`absolute inset-0 transition-all duration-500 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm bg-slate-950/60 opacity-0 group-hover:opacity-100`}>
