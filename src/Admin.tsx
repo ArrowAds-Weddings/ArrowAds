@@ -629,7 +629,7 @@ export default function Admin() {
       <main className="flex-1 max-w-7xl mx-auto w-full p-8">
         <div className="flex gap-10">
           {/* Sidebar */}
-          <aside className="w-72 flex-shrink-0 space-y-6">
+          <aside className="w-96 flex-shrink-0 space-y-6">
             {/* Folder Status Widget */}
             <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden relative group">
                <div className="absolute top-0 right-0 w-24 h-24 bg-gold/5 rounded-full -mr-8 -mt-8 transition-all group-hover:scale-150"></div>
@@ -704,7 +704,7 @@ export default function Admin() {
                 </div>
                 
                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl shadow-inner max-h-[400px] overflow-y-auto space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {galleryItems.map((item) => (
                       <div
                         key={item.id}
