@@ -749,7 +749,7 @@ export default function Admin() {
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 </div>
                 
-                <div className="max-h-[500px] overflow-y-auto pr-1">
+                <div>
                   <PreviewGrid items={galleryItems} />
                 </div>
               </div>
@@ -823,8 +823,8 @@ export default function Admin() {
                                 src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w400`}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-110" 
                                 alt={item.title}
-                                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                                style={{ opacity: 0.1, transition: 'opacity 0.5s' }}
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Wait...';
                                 }}
