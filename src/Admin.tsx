@@ -32,6 +32,54 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const ADMIN_USER = import.meta.env.VITE_ADMIN_USERNAME || 'Admin';
 const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || '123123123';
 
+const PreviewImage = React.memo(({ item }: { item: GalleryConfig['images'][0] }) => {
+  const [loaded, setLoaded] = useState(false);
+  const src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w200`;
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-lg bg-slate-100 ${
+        item.size === 'tall' ? 'aspect-[2/3]' :
+        item.size === 'short' ? 'aspect-[3/2]' : 
+        'aspect-[4/5]'
+      }`}
+    >
+      <img
+        src={src}
+        alt={item.title}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        referrerPolicy="no-referrer"
+        onLoad={() => setLoaded(true)}
+      />
+      <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
+        <span className="text-[8px] text-white font-serif italic line-clamp-2">{item.title}</span>
+      </div>
+      <div className="absolute top-1 left-1 bg-slate-900/80 text-[8px] text-gold px-1 rounded font-bold">
+        #{item.order}
+      </div>
+    </div>
+  );
+});
+
+const PreviewGrid = React.memo(({ items }: { items: GalleryConfig['images'] }) => {
+  const previewCols: typeof items[] = [[], [], []];
+  items.forEach((item, idx) => {
+    previewCols[idx % 3].push(item);
+  });
+
+  return (
+    <div className="grid grid-cols-3 gap-2 items-start w-full">
+      {previewCols.map((col, colIdx) => (
+        <div key={colIdx} className="flex flex-col gap-2">
+          {col.map((item) => (
+            <PreviewImage key={item.id} item={item} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+});
+
 export default function Admin() {
   // Authentication states
   const [isLocalAuthenticated, setIsLocalAuthenticated] = useState(false);
@@ -696,52 +744,18 @@ export default function Admin() {
             </div>
 
             {/* Live Preview Widget */}
-            {galleryItems.length > 0 && (() => {
-              const previewCols: typeof galleryItems[] = [[], [], []];
-              galleryItems.forEach((item, idx) => {
-                previewCols[idx % 3].push(item);
-              });
-              return (
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  </div>
-                  
-                  <div className="max-h-[500px] overflow-y-auto pr-1">
-                    <div className="grid grid-cols-3 gap-2 items-start w-full">
-                      {previewCols.map((col, colIdx) => (
-                        <div key={colIdx} className="flex flex-col gap-2">
-                          {col.map((item) => (
-                            <div
-                              key={item.id}
-                              className={`relative overflow-hidden rounded-lg bg-slate-100 ${
-                                item.size === 'tall' ? 'aspect-[2/3]' :
-                                item.size === 'short' ? 'aspect-[3/2]' : 
-                                'aspect-[4/5]'
-                              }`}
-                            >
-                              <img
-                                src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w200`}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
-                                <span className="text-[8px] text-white font-serif italic line-clamp-2">{item.title}</span>
-                              </div>
-                              <div className="absolute top-1 left-1 bg-slate-900/80 text-[8px] text-gold px-1 rounded font-bold">
-                                #{item.order}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            {galleryItems.length > 0 && (
+              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 </div>
-              );
-            })()}
+                
+                <div className="max-h-[500px] overflow-y-auto pr-1">
+                  <PreviewGrid items={galleryItems} />
+                </div>
+              </div>
+            )}
           </aside>
 
           {/* Content Area */}
