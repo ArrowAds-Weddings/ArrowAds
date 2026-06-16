@@ -702,20 +702,20 @@ export default function Admin() {
                 previewCols[idx % 3].push(item);
               });
               return (
-                <div className="sticky top-24 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs uppercase font-bold tracking-widest text-slate-400">Live Preview</h3>
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                   </div>
                   
-                  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl shadow-inner max-h-[400px] overflow-y-auto space-y-3">
-                    <div className="grid grid-cols-3 gap-2 items-start">
+                  <div className="max-h-[500px] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-3 gap-2 items-start w-full">
                       {previewCols.map((col, colIdx) => (
                         <div key={colIdx} className="flex flex-col gap-2">
                           {col.map((item) => (
                             <div
                               key={item.id}
-                              className={`relative overflow-hidden rounded-lg ${
+                              className={`relative overflow-hidden rounded-lg bg-slate-100 ${
                                 item.size === 'tall' ? 'aspect-[2/3]' :
                                 item.size === 'short' ? 'aspect-[3/2]' : 
                                 'aspect-[4/5]'
